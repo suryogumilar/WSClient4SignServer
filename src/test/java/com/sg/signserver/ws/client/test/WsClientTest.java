@@ -15,6 +15,8 @@ import org.signserver.clientws.Metadata;
 import org.signserver.clientws.RequestFailedException_Exception;
 import org.signserver.clientws.SodRequest;
 import org.signserver.clientws.SodResponse;
+import org.apache.commons.codec.binary.Base64;
+
 
 public class WsClientTest {
 	@Test
@@ -30,23 +32,24 @@ public class WsClientTest {
 		
 		DataGroup dg1 = new DataGroup();
 		dg1.setId(1);
-		dg1.setValue("PJaDAX+eS/M9D77dJr8UP9ct6bndFFRBt18GBAR+oo4=".getBytes(charset));
+		dg1.setValue(Base64.decodeBase64("PJaDAX+eS/M9D77dJr8UP9ct6bndFFRBt18GBAR+oo4="));
 		sodData.getDataGroup().add(dg1);
 		
 		DataGroup dg2 = new DataGroup();
 		dg2.setId(2);
-		dg2.setValue("BTfUgfc6dXM0MoBS2jr5YmztlwKOILhJ9hFcIs12UZc=".getBytes(charset));
+		dg2.setValue(Base64.decodeBase64("BTfUgfc6dXM0MoBS2jr5YmztlwKOILhJ9hFcIs12UZc="));
 		sodData.getDataGroup().add(dg2);
 		
 		DataGroup dg3 = new DataGroup();
 		dg3.setId(3);
-		dg3.setValue("idxq5/Bqn0a1Za8D6rDs4L9gJNNlm346HQNXPP6wtZ0=".getBytes(charset));
+		dg3.setValue(Base64.decodeBase64("idxq5/Bqn0a1Za8D6rDs4L9gJNNlm346HQNXPP6wtZ0="));
 		sodData.getDataGroup().add(dg3);
 		
 		
 		sodData.setUnicodeVersion("040000");
 		SodResponse sodResponse = ws.getClientWSPort().processSOD(worker, metadata, sodData);
 		
-		System.out.println(new String(sodResponse.getData()));
+		System.out.println(new String(Base64.encodeBase64(sodResponse.getData())));
+		System.out.println(new String(Base64.encodeBase64(sodResponse.getSignerCertificate())));
 	}
 }
