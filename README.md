@@ -1,6 +1,8 @@
-Web Service Client untuk Signserver
+# Web Service Client untuk Signserver
 
-# Generate Client using eclipse IDE
+Signserver yg digunakan adalah versi 5.2.0
+
+## Generate Client using eclipse IDE
 
 pertama buat project Maven, set package ke war di pom.xml nya
 
