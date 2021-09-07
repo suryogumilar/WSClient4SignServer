@@ -13,6 +13,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 //import javax.net.ssl.SSLSocketFactory;
@@ -46,53 +47,18 @@ import org.signserver.clientws.SodRequest;
 import org.signserver.clientws.SodResponse;
 
 public class WsClientHttpsTest {
+	static {
+	    HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> hostname.equals("ss.gehirn.org"));
+	}
 	@Test
 	public void tes() throws Exception {
 		
-		Bus bus = BusFactory.getThreadDefaultBus();
-       ResourceManager extension = bus.getExtension(ResourceManager.class);
 
-       extension.addResourceResolver(new ResourceResolver() {
-
-		@Override
-		public <T> T resolve(String resourceName, Class<T> resourceType) {
-			System.out.println("resourceName: " + resourceName + " - resourceType: " + resourceType);
-            return null;
-		}
-
-		@Override
-		public InputStream getAsStream(String name) {
-			try {
-                if (!name.startsWith("https")) {
-                    return null;
-                }
-                //SSLSocketFactory sslSocketFactory = SslUtil.getSslSocketFactory();
-                SSLSocketFactory sslSocketFactory = new SSLSocketFactory(new org.apache.http.conn.ssl.TrustStrategy() {
-					
-					@Override
-					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-						return true;
-					}
-				});
-                SchemeRegistry schemeRegistry = new SchemeRegistry();
-                schemeRegistry.register(new Scheme("https", 8443, sslSocketFactory));
-
-                final HttpParams httpParams = new BasicHttpParams();
-                DefaultHttpClient httpClient = new DefaultHttpClient(new BasicClientConnectionManager(schemeRegistry), httpParams);
-
-                HttpGet get = new HttpGet(name);
-                HttpResponse response = httpClient.execute(get);
-                return response.getEntity().getContent();
-            } catch (Exception e) {
-                return null;
-            }
-		}
-    	   
-       });
 		
 		URL wsdlLocation = new URL("https://ss.gehirn.org:8443/signserver/ClientWSService/ClientWS?wsdl");
 		
 		ClientWSService ws = new ClientWSService(wsdlLocation);
+		
 		String worker="MRTDSODSigner_DoDgHashFalse";
 		List<Metadata> metadata = null;
 		SodRequest sodData = new SodRequest();
@@ -126,8 +92,12 @@ public class WsClientHttpsTest {
 		IOException, UnrecoverableKeyException, CertificateException {
 		Client client = ClientProxy.getClient(port);
        HTTPConduit http = (HTTPConduit) client.getConduit();
-       
+       System.out.println("conduit  "+http.getAddress() +"||"+ http.getConduitName());
        TLSClientParameters tlsClientParameters = http.getTlsClientParameters();
+       if(tlsClientParameters == null) {
+    	   tlsClientParameters = new TLSClientParameters();
+       }
+       tlsClientParameters.setDisableCNCheck(true); // disableCNCheck
 
        KeyStore keyStore = getKeyStore();
        KeyStore trustStore = getTrustStore();
@@ -135,7 +105,7 @@ public class WsClientHttpsTest {
        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
-       keyManagerFactory.init(keyStore, "123456".toCharArray());
+       keyManagerFactory.init(keyStore, "passw0rd".toCharArray());
        KeyManager[] keyMgrs = keyManagerFactory.getKeyManagers();
        tlsClientParameters.setKeyManagers(keyMgrs);
 
@@ -143,13 +113,16 @@ public class WsClientHttpsTest {
        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
        tlsClientParameters.setTrustManagers(trustManagers);
 
-       tlsClientParameters.setDisableCNCheck(true);
+       http.setTlsClientParameters(tlsClientParameters);
        
 	}
 	
     public static KeyStore getKeyStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-        URL keyStoreUrl = WsClientHttpsTest.class.getResource(
+       
+    	
+    	String path = (
         		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/keystore.jks");
+		URL keyStoreUrl = new File(path).toURI().toURL();
         File keystoreFile = new File(keyStoreUrl.getPath());
         if (!keystoreFile.exists()) {
             throw new RuntimeException("keystore doesn't exists: " + keystoreFile.getAbsolutePath());
@@ -163,8 +136,9 @@ public class WsClientHttpsTest {
     }
 
     public static KeyStore getTrustStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
-        URL trustStoreUrl = WsClientHttpsTest.class.getResource(
-        		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/cacert.jks");
+    	String path = (
+        		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/cacerts.jks");
+    	URL trustStoreUrl = new File(path).toURI().toURL();
         File trustStoreFile = new File(trustStoreUrl.getPath());
         if (!trustStoreFile.exists()) {
             throw new RuntimeException("truststore doesn't exists: " + trustStoreFile.getAbsolutePath());
