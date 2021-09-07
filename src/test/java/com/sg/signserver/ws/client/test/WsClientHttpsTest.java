@@ -1,16 +1,5 @@
 package com.sg.signserver.ws.client.test;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.util.List;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -21,31 +10,85 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
+//import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.xml.namespace.QName;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.resource.ResourceManager;
+import org.apache.cxf.resource.ResourceResolver;
 import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
 import org.junit.Test;
 import org.signserver.clientws.ClientWS;
 import org.signserver.clientws.ClientWSService;
 import org.signserver.clientws.DataGroup;
-import org.signserver.clientws.InternalServerException_Exception;
 import org.signserver.clientws.Metadata;
-import org.signserver.clientws.RequestFailedException_Exception;
 import org.signserver.clientws.SodRequest;
 import org.signserver.clientws.SodResponse;
 
 public class WsClientHttpsTest {
 	@Test
 	public void tes() throws Exception {
+		
+		Bus bus = BusFactory.getThreadDefaultBus();
+       ResourceManager extension = bus.getExtension(ResourceManager.class);
+
+       extension.addResourceResolver(new ResourceResolver() {
+
+		@Override
+		public <T> T resolve(String resourceName, Class<T> resourceType) {
+			System.out.println("resourceName: " + resourceName + " - resourceType: " + resourceType);
+            return null;
+		}
+
+		@Override
+		public InputStream getAsStream(String name) {
+			try {
+                if (!name.startsWith("https")) {
+                    return null;
+                }
+                //SSLSocketFactory sslSocketFactory = SslUtil.getSslSocketFactory();
+                SSLSocketFactory sslSocketFactory = new SSLSocketFactory(new org.apache.http.conn.ssl.TrustStrategy() {
+					
+					@Override
+					public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+						return true;
+					}
+				});
+                SchemeRegistry schemeRegistry = new SchemeRegistry();
+                schemeRegistry.register(new Scheme("https", 8443, sslSocketFactory));
+
+                final HttpParams httpParams = new BasicHttpParams();
+                DefaultHttpClient httpClient = new DefaultHttpClient(new BasicClientConnectionManager(schemeRegistry), httpParams);
+
+                HttpGet get = new HttpGet(name);
+                HttpResponse response = httpClient.execute(get);
+                return response.getEntity().getContent();
+            } catch (Exception e) {
+                return null;
+            }
+		}
+    	   
+       });
 		
 		URL wsdlLocation = new URL("https://ss.gehirn.org:8443/signserver/ClientWSService/ClientWS?wsdl");
 		
