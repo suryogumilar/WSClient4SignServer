@@ -59,7 +59,7 @@ public class WsClientHttpsTest {
 		
 		ClientWSService ws = new ClientWSService(wsdlLocation);
 		
-		String worker="MRTDSODSigner_DoDgHashFalse";
+		String worker="MRTDSODSigner";
 		List<Metadata> metadata = null;
 		SodRequest sodData = new SodRequest();
 		
@@ -81,7 +81,7 @@ public class WsClientHttpsTest {
 		
 		sodData.setUnicodeVersion("040000");
 		ClientWS clientWSPort = ws.getClientWSPort();
-		tslIt(clientWSPort);
+		//tslIt(clientWSPort);
 		SodResponse sodResponse = clientWSPort.processSOD(worker, metadata, sodData);
 		
 		System.out.println(new String(Base64.encodeBase64(sodResponse.getData())));
@@ -97,21 +97,23 @@ public class WsClientHttpsTest {
        if(tlsClientParameters == null) {
     	   tlsClientParameters = new TLSClientParameters();
        }
-       tlsClientParameters.setDisableCNCheck(true); // disableCNCheck
+       tlsClientParameters.setDisableCNCheck(false); // disableCNCheck
 
        KeyStore keyStore = getKeyStore();
        KeyStore trustStore = getTrustStore();
-
+       
+       System.out.println("key provider = "+keyStore.getProvider().getName());
+       
        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
        keyManagerFactory.init(keyStore, "passw0rd".toCharArray());
        KeyManager[] keyMgrs = keyManagerFactory.getKeyManagers();
-       tlsClientParameters.setKeyManagers(keyMgrs);
+       //tlsClientParameters.setKeyManagers(keyMgrs);
 
        trustManagerFactory.init(trustStore);
        TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-       tlsClientParameters.setTrustManagers(trustManagers);
+       //tlsClientParameters.setTrustManagers(trustManagers);
 
        http.setTlsClientParameters(tlsClientParameters);
        
@@ -121,7 +123,7 @@ public class WsClientHttpsTest {
        
     	
     	String path = (
-        		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/keystore.jks");
+        		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/mrtdauth_keystore.jks");
 		URL keyStoreUrl = new File(path).toURI().toURL();
         File keystoreFile = new File(keyStoreUrl.getPath());
         if (!keystoreFile.exists()) {
@@ -137,7 +139,7 @@ public class WsClientHttpsTest {
 
     public static KeyStore getTrustStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
     	String path = (
-        		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/cacerts.jks");
+        		"C:/Worksite/WORK/Project/2021/Kemenlu_peruri/dckr_vols/tuk_ws/mrtdauth_cacerts.jks");
     	URL trustStoreUrl = new File(path).toURI().toURL();
         File trustStoreFile = new File(trustStoreUrl.getPath());
         if (!trustStoreFile.exists()) {
