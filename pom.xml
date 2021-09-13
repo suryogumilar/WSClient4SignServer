@@ -9,7 +9,7 @@
 	</parent>
 	<artifactId>WSClientSignServer</artifactId>
 	<name>WS Client untuk Sign Server</name>
-	<packaging>war</packaging>
+	<packaging>${packaging.type}</packaging>
 	<!-- Properties -->
 	<!-- =============================================================== -->
 	<properties>
@@ -88,6 +88,23 @@
 		<!-- Thanks for using https://jar-download.com -->
 
 	</dependencies>
+	<profiles>
+		<profile>
+			<id>webapp</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<packaging.type>war</packaging.type>
+			</properties>
+		</profile>
+		<profile>
+			<id>formavenlib</id>
+			<properties>
+				<packaging.type>jar</packaging.type>
+			</properties>
+		</profile>
+	</profiles>
 	<build>
 		<plugins>
 			<plugin>
