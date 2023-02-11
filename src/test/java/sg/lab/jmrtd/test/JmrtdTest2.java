@@ -17,7 +17,15 @@ import org.jmrtd.lds.SODFile;
 import org.junit.Test;
 
 public class JmrtdTest2 {
-
+	public static String hex(byte[] bytes) {
+        StringBuilder result = new StringBuilder();
+        for (byte aByte : bytes) {
+            result.append(String.format("%02x", aByte));
+            // upper case
+            // result.append(String.format("%02X", aByte));
+        }
+        return result.toString();
+    }
 	@Test
 	public void test1() throws IOException, NoSuchAlgorithmException {
 		Properties p = new Properties();
@@ -37,6 +45,13 @@ public class JmrtdTest2 {
 		for (Integer key : keySet) {
 			System.out.println("DG"+key+" in SOD  :  "+new String(needEncodeDecode(
 					dataGroupHashes.get(key), p.getProperty("base64ops")))+"");
+		}
+		
+		
+		for (Integer key : keySet) {
+			System.out.println("DG"+key+" in SOD  :  "+
+					JmrtdTest2.hex((dataGroupHashes.get(key)))	
+					);
 		}
 		
 		
